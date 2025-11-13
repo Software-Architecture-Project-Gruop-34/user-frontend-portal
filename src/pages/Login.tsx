@@ -22,7 +22,11 @@ const Login: React.FC = () => {
         localStorage.setItem('userRole', user.role);
         localStorage.setItem('userStatus', user.status);
         toast.success('Login successful!');
-        navigate('/profile');
+        if (user.role === 'ADMIN') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         toast.error(response.data.message);
       }
