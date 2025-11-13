@@ -29,6 +29,18 @@ export interface User {
     password?: string;
   }
   
+  export interface RegistrationData {
+    email: string;
+    password?: string;
+    businessName?: string;
+    contactPerson: string;
+    phoneNumber: string;
+    address: string;
+    role: 'ADMIN' | 'VENDOR';
+  }
+  
+  export type RegistrationResponse = LoginResponse;
+  
   export interface RegisterPayload extends LoginCredentials {
     businessName: string;
     contactPerson: string;
