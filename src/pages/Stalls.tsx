@@ -35,10 +35,16 @@ const StallsPage: React.FC = () => {
         const data: Stall[] = await res.json();
         setStalls(data);
         setError(null);
-      } catch (err: any) {
-        if (err.name !== "AbortError") {
+      } catch (err: unknown) {
+        if (err instanceof DOMException) {
+          if (err.name !== "AbortError") {
+            console.error(err);
+            setError(err.message || "Failed to load stalls");
+          }
+        } else {
+          const message = err instanceof Error ? err.message : String(err);
           console.error(err);
-          setError(err.message || "Failed to load stalls");
+          setError(message || "Failed to load stalls");
         }
       } finally {
         setLoading(false);

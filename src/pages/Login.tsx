@@ -30,8 +30,11 @@ const Login: React.FC = () => {
       } else {
         toast.error(response.data.message);
       }
-    } catch (error: any) {
-      if (error.response) {
+    } catch (error: unknown) {
+      const isAxiosLikeError = (e: unknown): e is { response?: { data?: { message?: string } } } =>
+        typeof e === 'object' && e !== null && 'response' in e;
+
+      if (isAxiosLikeError(error) && error.response && error.response.data && error.response.data.message) {
         toast.error(error.response.data.message);
       } else {
         toast.error('An unknown error occurred.');

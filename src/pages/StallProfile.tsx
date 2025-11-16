@@ -45,10 +45,10 @@ const StallProfile: React.FC = () => {
         const data: Stall = await res.json();
         setStall(data);
         setError(null);
-      } catch (err: any) {
-        if (err.name !== "AbortError") {
+      } catch (err: unknown) {
+        if (!(err instanceof DOMException && err.name === "AbortError")) {
           console.error(err);
-          setError(err.message || "Failed to load stall");
+          setError(err instanceof Error ? err.message : String(err) || "Failed to load stall");
         }
       } finally {
         setLoading(false);
@@ -75,9 +75,9 @@ const StallProfile: React.FC = () => {
         setStall(updated);
       }
       toast.success(`${action === "reserve" ? "Reserved" : "Released"} successfully`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(err?.message || "Operation failed");
+      toast.error(err instanceof Error ? err.message : String(err) || "Operation failed");
     } finally {
       setSaving(false);
     }
