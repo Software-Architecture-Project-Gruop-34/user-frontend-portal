@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 
 const NavBar: React.FC = () => {
 
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/login';
+  };
+
 
   return (
     <nav className="bg-blue-600 text-white shadow">
@@ -15,11 +20,13 @@ const NavBar: React.FC = () => {
           </div>
 
           <div className="hidden md:flex md:items-center md:space-x-6">
-            <Link to="/" className="hover:bg-blue-500 px-3 py-2 rounded" >Home</Link>
+            
             <Link to="/dashboard" className="hover:bg-blue-500 px-3 py-2 rounded">Dashboard</Link>
             <Link to="/profile" className="hover:bg-blue-500 px-3 py-2 rounded">Profile</Link>
             <Link to="/settings" className="hover:bg-blue-500 px-3 py-2 rounded">Settings</Link>
-            <Link to="/logout" className="hover:bg-blue-500 px-3 py-2 rounded">Logout</Link>
+            <button type="button" onClick={handleLogout} className="hover:bg-blue-500 px-3 py-2 rounded">
+            <span className="ml-2">Logout</span>
+          </button>
           </div>
 
           

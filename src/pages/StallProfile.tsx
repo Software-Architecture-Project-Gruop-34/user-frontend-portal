@@ -142,7 +142,7 @@ const StallProfile: React.FC = () => {
 
               <div className="text-right">
                 <p className="text-sm text-gray-500">Price</p>
-                <p className="text-xl font-semibold">₹{stall.price.toFixed(2)}</p>
+                <p className="text-xl font-semibold">Rs.{stall.price.toFixed(2)}</p>
               </div>
             </div>
 

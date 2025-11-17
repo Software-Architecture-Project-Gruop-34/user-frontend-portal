@@ -23,6 +23,11 @@ const StallsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // determine role from localStorage; show "Create Stall" only for ADMIN
+  const rawRole = localStorage.getItem("userRole") || "";
+  const role = rawRole.toUpperCase();
+  const isAdmin = role === "ADMIN";
+
   useEffect(() => {
     const controller = new AbortController();
     const fetchStalls = async () => {
@@ -84,12 +89,16 @@ const StallsPage: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">All Stalls</h1>
-          <Link
-            to="/stalls/new"
-            className="text-sm px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Create Stall
-          </Link>
+
+          {/* only show "Create Stall" to admins */}
+          {isAdmin && (
+            <Link
+              to="/stalls/new"
+              className="text-sm px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Create Stall
+            </Link>
+          )}
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -141,7 +150,7 @@ const StallsPage: React.FC = () => {
                   </span>
 
                   <span className="text-lg font-semibold">
-                    ₹{stall.price.toFixed(2)}
+                    Rs.{stall.price.toFixed(2)}
                   </span>
                 </div>
 

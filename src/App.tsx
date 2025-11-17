@@ -6,7 +6,7 @@ import Registration from './pages/Registration';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
-import Stalls from './pages/stalls';
+import Stalls from './pages/Stalls';
 import StallProfile from './pages/StallProfile';
 import Layout from './layouts/Layout';
 

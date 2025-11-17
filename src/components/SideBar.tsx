@@ -6,6 +6,11 @@ const SideBar: React.FC = () => {
   const role = rawRole.toUpperCase();
   const isAdmin = role === 'ADMIN';
 
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/login';
+  };
+
   return (
     <aside className="hidden md:block md:w-64 bg-white border-r border-gray-200">
       <div className="h-full px-4 py-6 overflow-y-auto">
@@ -43,9 +48,9 @@ const SideBar: React.FC = () => {
             <span className="ml-2">Settings</span>
           </Link>
 
-          <Link to="/logout" className="flex items-center px-3 py-2 text-red-600 rounded hover:bg-red-50">
+          <button type="button" onClick={handleLogout} className="w-full text-left flex items-center px-3 py-2 text-red-600 rounded hover:bg-red-50">
             <span className="ml-2">Logout</span>
-          </Link>
+          </button>
         </nav>
       </div>
     </aside>
