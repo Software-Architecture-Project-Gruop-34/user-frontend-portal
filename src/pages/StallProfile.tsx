@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { showSuccess, showError } from "../components/common/Toast";
 
 interface Stall {
   id: number;
@@ -74,10 +74,10 @@ const StallProfile: React.FC = () => {
         const updated: Stall = await refreshedRes.json();
         setStall(updated);
       }
-      toast.success(`${action === "reserve" ? "Reserved" : "Released"} successfully`);
+      showSuccess(`${action === "reserve" ? "Reserved" : "Released"} successfully`);
     } catch (err: unknown) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : String(err) || "Operation failed");
+      showError(err instanceof Error ? err.message : String(err) || "Operation failed");
     } finally {
       setSaving(false);
     }
