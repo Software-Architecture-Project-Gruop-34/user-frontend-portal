@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Modal from "../common/Modal";
+import { showSuccess, showError } from "../common/Toast";
 
 interface Stall {
   id: number;
@@ -49,11 +50,25 @@ const ReleaseModal: React.FC<ReleaseModalProps> = ({ isVisible, stall, onClose, 
         throw new Error(msg);
       }
 
+      showSuccess(`Stall ${stall.stallCode ?? stall.id} released`);
       if (onConfirm) await onConfirm(stall.id);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err?.message || "Release failed");
+      let msg = "Release failed";
+      if (err && typeof err === "object" && "message" in err && typeof (err as { message?: unknown }).message === "string") {
+        msg = (err as { message: string }).message;
+      } else if (typeof err === "string") {
+        msg = err;
+      } else {
+        try {
+          msg = String(err);
+        } catch {
+          msg = "Release failed";
+        }
+      }
+      setError(msg);
+      showError(msg);
     } finally {
       setLoading(false);
     }

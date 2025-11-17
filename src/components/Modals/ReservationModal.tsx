@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Modal from "../common/Modal";
+import { showSuccess, showError } from "../common/Toast";
 
 interface Stall {
   id: number;
@@ -36,24 +37,26 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isVisible, stall, o
 
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      setError("You must be logged in to reserve a stall.");
+      const msg = "You must be logged in to reserve a stall.";
+      setError(msg);
+      showError(msg);
       return;
     }
 
     setLoading(true);
     try {
-      // Always call backend to reserve, include userId (header + body) and stallId
+      // call backend reserve endpoint with userId and stallId
       const res = await fetch(`${BASE}/api/stalls/${stall.id}/reserve`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "X-User-Id": userId, // pass user id in header
+          "X-User-Id": userId,
         },
-        body: JSON.stringify({ userId, stallId: stall.id }), // also include in body
+        body: JSON.stringify({ userId, stallId: stall.id }),
       });
 
       if (!res.ok) {
-        // try parse JSON error body (expected format in prompt)
+        // try parse JSON error body (expected format)
         let msg = `Reservation failed (${res.status})`;
         try {
           const j = await res.json();
@@ -65,15 +68,18 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isVisible, stall, o
         throw new Error(msg);
       }
 
-      // notify parent to update UI if provided
+      // success
+      showSuccess(`Stall ${stall.stallCode ?? stall.id} reserved`);
       if (onConfirm) {
         await onConfirm(stall.id);
       }
-
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err?.message || "Reservation failed");
+      const msg =
+        err instanceof Error ? err.message : (typeof err === "string" ? err : "Reservation failed");
+      setError(msg);
+      showError(msg);
     } finally {
       setLoading(false);
     }
