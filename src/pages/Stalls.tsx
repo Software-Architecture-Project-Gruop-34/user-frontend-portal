@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import StallsMap from "../components/StallsMap";
+import CreateStallModal from "../components/Modals/CreateStallModal";
+import { showSuccess, showError } from "../components/common/Toast";
 
 interface Stall {
   id: number;
@@ -27,6 +29,9 @@ const StallsPage: React.FC = () => {
   const rawRole = localStorage.getItem("userRole") || "";
   const role = rawRole.toUpperCase();
   const isAdmin = role === "ADMIN";
+
+  // modal state for create
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -84,6 +89,14 @@ const StallsPage: React.FC = () => {
     );
   }
 
+  // handle newly created stall
+  const handleCreate = (created: Stall) => {
+    // add to top of list
+    setStalls((prev) => [created, ...prev]);
+    showSuccess(`Stall ${created.stallCode} created`);
+    setCreateOpen(false);
+  };
+
   return (
     <div className="h-full p-6 bg-gray-100">
       <div className="max-w-7xl mx-auto">
@@ -91,19 +104,45 @@ const StallsPage: React.FC = () => {
           <h1 className="text-2xl font-semibold">Exhibition Hall</h1>
 
           {/* only show "Create Stall" to admins */}
-          {isAdmin && (
-            <Link
-              to="/stalls/new"
+          {isAdmin ? (
+            <button
+              onClick={() => setCreateOpen(true)}
               className="text-sm px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               Create Stall
+            </button>
+          ) : (
+            <Link
+              to="/stalls"
+              className="text-sm px-3 py-2 bg-transparent text-gray-700 rounded"
+            >
+              View stalls
             </Link>
           )}
         </div>
 
         {/* Map-only view — clicking a stall shows details in the right panel */}
-        <StallsMap stalls={stalls} onStallClick={() => { /* noop — selection handled inside map */ }} />
+        <StallsMap
+          stalls={stalls}
+          onStallClick={() => {
+            /* noop — selection handled inside map */
+          }}
+        />
       </div>
+
+      {/* Create modal */}
+      <CreateStallModal
+        isVisible={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreate={(created) => {
+          try {
+            handleCreate(created as Stall);
+          } catch (e) {
+            console.error(e);
+            showError("Failed to add created stall to list");
+          }
+        }}
+      />
     </div>
   );
 };
