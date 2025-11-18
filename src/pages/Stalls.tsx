@@ -112,12 +112,12 @@ const StallsPage: React.FC = () => {
               Create Stall
             </button>
           ) : (
-            <Link
-              to="/stalls"
-              className="text-sm px-3 py-2 bg-transparent text-gray-700 rounded"
+            <button
+              onClick={() => {}}
+              className="text-sm px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              View stalls
-            </Link>
+              My Stalls
+            </button>
           )}
         </div>
 
