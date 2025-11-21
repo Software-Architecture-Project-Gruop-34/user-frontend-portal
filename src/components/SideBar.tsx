@@ -5,6 +5,7 @@ const SideBar: React.FC = () => {
   const rawRole = localStorage.getItem('userRole') || '';
   const role = rawRole.toUpperCase();
   const isAdmin = role === 'ADMIN';
+  const isUser = role === 'USER';
 
   const handleLogout = () => {
     localStorage.clear();
@@ -20,20 +21,36 @@ const SideBar: React.FC = () => {
         </div>
 
         <nav className="space-y-1">
-          <Link to="/dashboard" className="flex items-center px-3 py-2 text-gray-700 rounded hover:bg-gray-100">
-            <span className="ml-2">Dashboard</span>
-          </Link>
+          
 
-          <Link to="/stalls" className="flex items-center px-3 py-2 text-gray-700 rounded hover:bg-gray-100">
-            <span className="ml-2">Stalls</span>
-          </Link>
+          
 
-          <Link to="/reservations" className="flex items-center px-3 py-2 text-gray-700 rounded hover:bg-gray-100">
-            <span className="ml-2">Reservations</span>
-          </Link>
+          {isUser && (
+            <>
+            <Link to="/dashboard" className="flex items-center px-3 py-2 text-gray-700 rounded hover:bg-gray-100">
+              <span className="ml-2">Dashboard</span>
+            </Link> 
+
+            <Link to="/stalls" className="flex items-center px-3 py-2 text-gray-700 rounded hover:bg-gray-100">
+                <span className="ml-2">Stalls</span>
+            </Link>
+
+            <Link to="/myreservations" className="flex items-center px-3 py-2 text-gray-700 rounded hover:bg-gray-100">
+              <span className="ml-2">My Reservations</span>
+            </Link>
+            </>
+          )}
 
           {isAdmin && (
             <>
+              <Link to="/admin/dashboard" className="flex items-center px-3 py-2 text-gray-700 rounded hover:bg-gray-100">
+                <span className="ml-2">Dashboard</span>
+              </Link> 
+
+              <Link to="/stalls" className="flex items-center px-3 py-2 text-gray-700 rounded hover:bg-gray-100">
+                <span className="ml-2">Stalls</span>
+              </Link>
+
               <Link to="/users" className="flex items-center px-3 py-2 text-gray-700 rounded hover:bg-gray-100">
                 <span className="ml-2">Users</span>
               </Link>

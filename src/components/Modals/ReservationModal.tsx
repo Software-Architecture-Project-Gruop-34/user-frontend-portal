@@ -22,10 +22,10 @@ interface ReservationModalProps {
   isVisible: boolean;
   stall: Stall | null;
   onClose: () => void;
-  onConfirm?: (stallId: number) => Promise<void> | void; // callback for parent after successful reservation
+  onConfirm?: (stallId: number) => Promise<void> | void;
 }
 
-const BASE = "http://localhost:8081";
+const RESERVATION_BASE = "http://localhost:8082";
 
 const ReservationModal: React.FC<ReservationModalProps> = ({ isVisible, stall, onClose, onConfirm }) => {
   const [loading, setLoading] = useState(false);
@@ -36,6 +36,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isVisible, stall, o
     setError(null);
 
     const userId = localStorage.getItem("userId");
+
     if (!userId) {
       const msg = "You must be logged in to reserve a stall.";
       setError(msg);
@@ -45,39 +46,39 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isVisible, stall, o
 
     setLoading(true);
     try {
-      // call backend reserve endpoint with userId and stallId
-      const res = await fetch(`${BASE}/api/stalls/${stall.id}/reserve`, {
-        method: "PUT",
+      // Create reservation record (backend handles stall status update)
+      const reservationRes = await fetch(`${RESERVATION_BASE}/api/reservations`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-User-Id": userId,
         },
-        body: JSON.stringify({ userId, stallId: stall.id }),
+        body: JSON.stringify({
+          userId: Number(userId),
+          stallId: stall.id,
+        }),
       });
 
-      if (!res.ok) {
-        // try parse JSON error body (expected format)
-        let msg = `Reservation failed (${res.status})`;
+      if (!reservationRes.ok) {
+        let msg = `Reservation failed (${reservationRes.status})`;
         try {
-          const j = await res.json();
+          const j = await reservationRes.json();
           if (j?.message) msg = j.message;
         } catch {
-          const txt = await res.text().catch(() => "");
+          const txt = await reservationRes.text().catch(() => "");
           if (txt) msg = txt;
         }
         throw new Error(msg);
       }
 
-      // success
-      showSuccess(`Stall ${stall.stallCode ?? stall.id} reserved`);
+      // Success
+      showSuccess(`Stall ${stall.stallCode ?? stall.id} reserved successfully`);
       if (onConfirm) {
         await onConfirm(stall.id);
       }
       onClose();
     } catch (err: unknown) {
       console.error(err);
-      const msg =
-        err instanceof Error ? err.message : (typeof err === "string" ? err : "Reservation failed");
+      const msg = err instanceof Error ? err.message : (typeof err === "string" ? err : "Reservation failed");
       setError(msg);
       showError(msg);
     } finally {

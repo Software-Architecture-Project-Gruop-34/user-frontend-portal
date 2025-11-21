@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { showSuccess, showError } from "../components/common/Toast";
 import EditStallModal from "../components/Modals/EditStallModal";
 import DeleteStallModal from "../components/Modals/DeleteStallModal";
+import ReservationModal from "../components/Modals/ReservationModal";
+import ReleaseModal from "../components/Modals/ReleaseModal";
 import { Edit2, Trash2 } from "lucide-react";
 
 interface Stall {
@@ -26,15 +27,17 @@ const StallProfile: React.FC = () => {
   const navigate = useNavigate();
   const [stall, setStall] = useState<Stall | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
+  // extra confirmation modals for reservation/release
+  const [reserveOpen, setReserveOpen] = useState(false);
+  const [releaseOpen, setReleaseOpen] = useState(false);
+
   const rawRole = localStorage.getItem("userRole") || "";
-  const role = rawRole.toUpperCase();
-  const isAdmin = role === "ADMIN";
+  const isAdmin = rawRole.toUpperCase() === "ADMIN";
 
   const baseUrl = "http://localhost:8081/api/stalls";
 
@@ -69,33 +72,19 @@ const StallProfile: React.FC = () => {
     return () => controller.abort();
   }, [id]);
 
-  const updateStatus = async (action: "reserve" | "release") => {
+  const refreshStall = async () => {
     if (!stall) return;
-    setSaving(true);
     try {
-      const res = await fetch(`${baseUrl}/${stall.id}/${action}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) throw new Error(`Action failed (${res.status})`);
-      const refreshedRes = await fetch(`${baseUrl}/${stall.id}`);
-      if (refreshedRes.ok) {
-        const updated: Stall = await refreshedRes.json();
-        setStall(updated);
-      }
-      showSuccess(`${action === "reserve" ? "Reserved" : "Released"} successfully`);
-    } catch (err: unknown) {
-      console.error(err);
-      showError(err instanceof Error ? err.message : String(err) || "Operation failed");
-    } finally {
-      setSaving(false);
+      const res = await fetch(`${baseUrl}/${stall.id}`);
+      if (!res.ok) return;
+      const data: Stall = await res.json();
+      setStall(data);
+    } catch (err) {
+      console.error("refresh stall failed", err);
     }
   };
 
-  const handleSave = (updated: Stall) => {
-    setStall(updated);
-    showSuccess("Stall updated");
-  };
+ 
 
   const handleAfterDelete = () => {
     navigate("/stalls");
@@ -131,12 +120,10 @@ const StallProfile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen py-2 bg-linear-to-b from-slate-50 to-white">
+    <div className="min-h-screen py-2  from-slate-50 to-white">
       <div className="max-w-5xl mx-auto p-4">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            
-
             <div>
               <h2 className="text-2xl font-semibold text-slate-800">{stall.stallName}</h2>
               <div className="flex items-center gap-3 mt-1">
@@ -155,16 +142,9 @@ const StallProfile: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="text-right">
-              <Link
-                    to="/stalls"
-                    className="px-4 py-2 bg-gray-100 text-slate-700 rounded-md shadow hover:bg-gray-200"
-                  >
-                    Back
-                  </Link>
-              
-              
-            </div>
+            <Link to="/stalls" className="px-4 py-2 bg-gray-100 text-slate-700 rounded-md shadow hover:bg-gray-200">
+              Back
+            </Link>
           </div>
         </div>
 
@@ -243,23 +223,19 @@ const StallProfile: React.FC = () => {
                 <div className="flex-1 flex gap-3">
                   {stall.status === "AVAILABLE" ? (
                     <button
-                      onClick={() => updateStatus("reserve")}
-                      disabled={saving}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 disabled:opacity-60"
+                      onClick={() => setReserveOpen(true)}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700"
                     >
-                      {saving ? "Processing..." : "Reserve Stall"}
+                      Reserve Stall
                     </button>
                   ) : (
                     <button
-                      onClick={() => updateStatus("release")}
-                      disabled={saving}
-                      className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-md shadow hover:bg-yellow-700 disabled:opacity-60"
+                      onClick={() => setReleaseOpen(true)}
+                      className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-md shadow hover:bg-yellow-700"
                     >
-                      {saving ? "Processing..." : "Release Stall"}
+                      Release Stall
                     </button>
                   )}
-
-                  
                 </div>
               </div>
             </div>
@@ -267,7 +243,7 @@ const StallProfile: React.FC = () => {
         </div>
 
         {/* modals */}
-        <EditStallModal isVisible={editOpen} stall={stall} onClose={() => setEditOpen(false)} onSave={handleSave} />
+        <EditStallModal isVisible={editOpen} stall={stall} onClose={() => setEditOpen(false)}  />
         <DeleteStallModal
           isVisible={deleteOpen}
           stall={stall}
@@ -275,6 +251,27 @@ const StallProfile: React.FC = () => {
           onConfirm={() => {
             setDeleteOpen(false);
             handleAfterDelete();
+          }}
+        />
+
+        {/* extra confirmation step for reservation/release */}
+        <ReservationModal
+          isVisible={reserveOpen}
+          stall={stall}
+          onClose={() => setReserveOpen(false)}
+          onConfirm={async () => {
+            await refreshStall();
+            setReserveOpen(false);
+          }}
+        />
+
+        <ReleaseModal
+          isVisible={releaseOpen}
+          stall={stall}
+          onClose={() => setReleaseOpen(false)}
+          onConfirm={async () => {
+            await refreshStall();
+            setReleaseOpen(false);
           }}
         />
       </div>

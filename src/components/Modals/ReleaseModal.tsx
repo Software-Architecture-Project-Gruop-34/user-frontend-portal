@@ -20,7 +20,7 @@ interface ReleaseModalProps {
   onConfirm?: (stallId: number) => Promise<void> | void;
 }
 
-const BASE = "http://localhost:8081";
+const RESERVATION_BASE = "http://localhost:8082";
 
 const ReleaseModal: React.FC<ReleaseModalProps> = ({ isVisible, stall, onClose, onConfirm }) => {
   const [loading, setLoading] = useState(false);
@@ -31,20 +31,52 @@ const ReleaseModal: React.FC<ReleaseModalProps> = ({ isVisible, stall, onClose, 
     setError(null);
     setLoading(true);
 
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      const msg = "You must be logged in to release a stall.";
+      setError(msg);
+      showError(msg);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch(`${BASE}/api/stalls/${stall.id}/release`, {
-        method: "PUT",
+      // Step 1: Find the reservation ID for this user and stall
+      const reservationsRes = await fetch(`${RESERVATION_BASE}/api/reservations?userId=${userId}&stallId=${stall.id}`, {
+        method: "GET",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stallId: stall.id }),
       });
 
-      if (!res.ok) {
-        let msg = `Release failed (${res.status})`;
+      if (!reservationsRes.ok) {
+        throw new Error(`Failed to find reservation (${reservationsRes.status})`);
+      }
+
+      const reservations = await reservationsRes.json();
+      
+      // Find the active reservation for this stall
+      const reservation = Array.isArray(reservations) 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? reservations.find((r: any) => r.stallId === stall.id && r.userId === Number(userId))
+        : reservations
+
+      if (!reservation || !reservation.id) {
+        throw new Error("No active reservation found for this stall");
+      }
+
+      // Step 2: Delete the reservation (backend handles stall status update)
+      const deleteRes = await fetch(`${RESERVATION_BASE}/api/reservations/${reservation.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!deleteRes.ok) {
+        let msg = `Release failed (${deleteRes.status})`;
         try {
-          const j = await res.json();
+          const j = await deleteRes.json();
           if (j?.message) msg = j.message;
         } catch {
-          const txt = await res.text().catch(() => "");
+          const txt = await deleteRes.text().catch(() => "");
           if (txt) msg = txt;
         }
         throw new Error(msg);
@@ -55,18 +87,7 @@ const ReleaseModal: React.FC<ReleaseModalProps> = ({ isVisible, stall, onClose, 
       onClose();
     } catch (err: unknown) {
       console.error(err);
-      let msg = "Release failed";
-      if (err && typeof err === "object" && "message" in err && typeof (err as { message?: unknown }).message === "string") {
-        msg = (err as { message: string }).message;
-      } else if (typeof err === "string") {
-        msg = err;
-      } else {
-        try {
-          msg = String(err);
-        } catch {
-          msg = "Release failed";
-        }
-      }
+      const msg = err instanceof Error ? err.message : (typeof err === "string" ? err : "Release failed");
       setError(msg);
       showError(msg);
     } finally {
@@ -94,7 +115,7 @@ const ReleaseModal: React.FC<ReleaseModalProps> = ({ isVisible, stall, onClose, 
               <span className="font-medium">{stall.width} × {stall.depth}</span>
             </div>
             <div>
-              <span className="text-gray-500">Price:</span> <span className="font-medium">₹{stall.price?.toFixed?.(2)}</span>
+              <span className="text-gray-500">Price:</span> <span className="font-medium">Rs.{stall.price?.toFixed?.(2)}</span>
             </div>
           </div>
         )}
